@@ -18,17 +18,16 @@ def get_stock_bars(stock):
 # msft = yf.Ticker("000960.SZ")
 
 
-def get_stock_infomations(stock):
+def get_stock_infomations(code):
     try:
-        msft = yf.Ticker(stock)
-        item = {
-            'trailingEps': msft.info['trailingEps'],
-            'targetLowPrice': msft.info['targetLowPrice'],
-            'targetMeanPrice': msft.info['targetMeanPrice'],
-            'targetMedianPrice': msft.info['targetMedianPrice'],
-            'targetHighPrice': msft.info['targetHighPrice']
-        }
-        return item
+        stock = yf.Ticker(code)
+        for key in list(stock.keys()):
+            if stock[key] == None:
+                stock.pop(key)
+        # 去掉这个值是列表的字段
+        stock['companyOfficers'] = ''
+        stock.pop('companyOfficers')
+        return stock
     except:
         pass
 
@@ -41,11 +40,10 @@ def iter_stock_infomations(resource_path):
     futu_faver = []
     i = 0
     for im in reader:
-        time.sleep(61)
+        time.sleep(1)
         try:
             msft = yf.Ticker(im[1])
             stock = msft.info
-            stock.pop('companyOfficers')
             # stock.pop('longBusinessSummary')
             # stock.pop('website')
             # stock.pop('address2')
@@ -134,4 +132,4 @@ def iter_stock_infomations(resource_path):
 
 # todaylist.T.to_csv('file/faver_stock_more_info.csv', index=False, sep=',')
 
-iter_stock_infomations('file/faver_stock.csv')
+# iter_stock_infomations('file/faver_stock.csv')

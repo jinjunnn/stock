@@ -2,7 +2,7 @@
 from tablestore import *
 import time
 
-import apis.stock_formula as sf
+import stock_formula as sf
 
 client = OTSClient("https://pharaontrade.cn-hangzhou.ots.aliyuncs.com", 'LTAI5tLWK2gTt8JB3kHkxyCa', 'xzlgVf6tbFBm3yNpUL54GnhdAi6oML', 'pharaontrade')
 
@@ -95,6 +95,11 @@ def put_row(table_name,primary_key,attribute_columns):
     # condition = Condition(RowExistenceExpectation.EXPECT_NOT_EXIST) # Expect not exist: put it into table only when this row is not exist.
     client.put_row(table_name, row)
     # print (u'Write succeed, consume %s write cu.' % consumed.write)
+
+def get_row(table_name,primary_key,columns_to_get):
+    consumed, return_row, next_token = client.get_row(table_name, primary_key, columns_to_get)
+    print ('Read succeed, consume %s read cu.' % consumed.read)
+    return(return_row)
 
 
 # 批量写入数据的上限是一次200行。

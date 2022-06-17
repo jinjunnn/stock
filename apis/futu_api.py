@@ -1,7 +1,7 @@
 from futu import *
 import csv
 
-import apis.stock_formula as sf
+import stock_formula as sf
 
 
 # 修改自选股列表
