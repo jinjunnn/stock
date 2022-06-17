@@ -93,7 +93,11 @@ def put_row(table_name,primary_key,attribute_columns):
     row = Row(primary_key, attribute_columns)
     print(row)
     # condition = Condition(RowExistenceExpectation.EXPECT_NOT_EXIST) # Expect not exist: put it into table only when this row is not exist.
-    client.put_row(table_name, row)
+    
+    try:
+        client.put_row(table_name, row)
+    except  Exception as e:
+        print(e)
     # print (u'Write succeed, consume %s write cu.' % consumed.write)
 
 def get_row(table_name,primary_key,columns_to_get):
