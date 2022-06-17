@@ -1,4 +1,8 @@
 import csv
+import yfinance as yf
+import json
+import pandas as pd
+import time
 
 # 从apis 文件夹中导入文件
 import sys
@@ -20,7 +24,8 @@ def iter_stocks(source_path):
         print(item)
         try:
             stock = ats.get_row('stock',[('code',sf.remove_suffix(item[1]))],['totalCash'])
-            print(stock.primary_key)
+            print(stock)
+            print(stock.primary_key,stock.attribute_columns)
         except  Exception as e:
             print(e)
 
@@ -37,4 +42,12 @@ def iter_stocks(source_path):
         # except Exception as e:
         #     print(e)
 
-iter_stocks('/Users/pharaon/Project/stock/file/total.csv')
+# iter_stocks('/Users/pharaon/Project/stock/file/total.csv')
+
+
+# stock = ats.get_row('stock',[('code','000416')],['totalCash'])
+# print(stock)
+
+tickers = yf.Tickers('msft aapl goog')
+
+print(tickers)
