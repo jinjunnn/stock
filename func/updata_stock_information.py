@@ -4,7 +4,6 @@ import json
 import pandas as pd
 import time
 
-import proxyfile as pf
 # 从apis 文件夹中导入文件
 import sys
 sys.path.append("./apis")
@@ -27,6 +26,7 @@ def prepare_data(code,stock):
     ats.update_row('stock',primary_key,attribute_columns)
 
 def iter_stocks(source_path):
+    print(1)
     #打开csv文件
     # stock_list = open('file/stock_list.csv', 'r')
     # reader = csv.reader(stock_list)
