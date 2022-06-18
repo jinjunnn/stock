@@ -20,10 +20,12 @@ def modify_favor(name, stocklist):
 # 获取板块数据
 def get_market():
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
-
-    ret, data = quote_ctx.get_plate_list(Market.SZ, Plate.ALL)
+    ret, data = quote_ctx.get_plate_list(Market.SH, Plate.ALL)
     if ret == RET_OK:
         print(data)
+        #保存df到csv文件
+        # data.to_csv('./file/sH_plate.csv', index=False)
+
         print(data['plate_name'][0])    # 取第一条的板块名称
         print(data['plate_name'].values.tolist())   # 转为 list
     else:
@@ -31,7 +33,17 @@ def get_market():
     quote_ctx.close() # 结束后记得关闭当条连接，防止连接条数用尽
 
 
+def get_stocks_in_market(plate):
+    quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+    ret, data = quote_ctx.get_plate_stock(plate)
+    if ret == RET_OK:
+        print(data)
 
+    else:
+        print('error:', data)
+    quote_ctx.close() # 结束后记得关闭当条连接，防止连接条数用尽
+
+get_stocks_in_market('SH.BK0784')
 
 # 修改自选股列表
 def upload_stock_to_futu(resource_path,futu_stock_list_name):
