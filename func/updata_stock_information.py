@@ -8,7 +8,7 @@ import time
 import sys
 sys.path.append("./apis")
 import stock_api as sa
-import stock_formula as sf
+import common
 import yhshare as yh
 import ali_tablestore as ats
 import tg
@@ -22,7 +22,7 @@ def prepare_data(code,stock):
     stock['companyOfficers'] = ''
     stock.pop('companyOfficers')
 
-    primary_key = [['code', sf.remove_suffix(code)]]
+    primary_key = [['code', common.remove_suffix(code)]]
     attribute_columns = list(zip(tuple(stock), stock.values()))
     ats.update_row('stock',primary_key,attribute_columns)
 
@@ -64,7 +64,7 @@ def iter_stocks_history(source_path):
     stock_list = open(source_path, 'r')
     reader = csv.reader(stock_list)
     for item in reader:
-        code = sf.yahoo_stockcode(item[2])
+        code = common.yahoo_stockcode(item[2])
         stockinfo = ats.get_row('stock',[('code',item[2])],['country'])
         print(stockinfo)
         if stockinfo == None:
@@ -95,7 +95,7 @@ def uploadAverageAmplitude(source_path):
             a = ((df['high'] - df['low']) / df['low']).mean() * 100
             # 保留两位小数
             a = round(a, 2)
-            primary_key = [['code', sf.remove_suffix(item[2])]]
+            primary_key = [['code', common.remove_suffix(item[2])]]
             attribute_columns = [('averageAmplitude', a)]
             print(primary_key, attribute_columns)
             ats.update_row('stock',primary_key,attribute_columns)
@@ -116,7 +116,7 @@ def uploadTargetPrice(source_path):
     reader = csv.reader(stock_list)
     for item in reader:
         try:
-            close_row = sa.get_stock_data(item[1], sf.today_int_shift(1), sf.today_int_shift(1))
+            close_row = sa.get_stock_data(item[1], common.today_int_shift(1), common.today_int_shift(1))
             close = close_row['close'].values[0]
             print('close:', close)
             targetMeanPrice_row = ats.get_row('stock',[('code',item[2])],['targetMeanPrice'])
@@ -138,7 +138,7 @@ def uploadTargetPrice(source_path):
                 # a = ((df['high'] - df['low']) / df['low']).mean() * 100
                 # # 保留两位小数
                 # a = round(a, 2)
-                # primary_key = [['code', sf.remove_suffix(item[2])]]
+                # primary_key = [['code', common.remove_suffix(item[2])]]
                 # attribute_columns = [('averageAmplitude', a)]
                 # print(primary_key, attribute_columns)
                 # ats.update_row('stock',primary_key,attribute_columns)
@@ -156,21 +156,21 @@ def uploadStrongBuyToFutu(source_path):
     for item in reader:
         try:
             stockinfo = ats.get_row('stock',[('code',item[2])],['expectedIncrease','recommendationKey','symbol','averageAmplitude'])
-            stock = sf.tuple_to_dict(stockinfo.attribute_columns)
+            stock = common.tuple_to_dict(stockinfo.attribute_columns)
             
             try :
                 CONDITION = stock['expectedIncrease'] > 70 and (stock['recommendationKey'] == 'strong_buy' or stock
                 ['recommendationKey'] == 'buy') and stock['averageAmplitude'] > 4
                 LABLE = 'first'
                 if CONDITION:
-                    print(sf.modify_stockcode(item[2]))
-                    _list.append(sf.modify_stockcode(item[2]))
+                    print(common.modify_stockcode(item[2]))
+                    _list.append(common.modify_stockcode(item[2]))
                     if len(_list) == 20:
                         print(_list)
                         fa.modify_favor(LABLE,_list)
                         _list = []
                 # if stockinfo.attribute_columns[0][1] > 30 and stockinfo.attribute_columns[1][1] == 'strong_buy':
-                #     print(sf.modify_stockcode(item[2]))
+                #     print(common.modify_stockcode(item[2]))
                 # _list.append(modify_stockcode(item[2]))
             except Exception as e:
                 print(e)
@@ -182,4 +182,4 @@ def uploadStrongBuyToFutu(source_path):
 # uploadStrongBuy('/Users/pharaon/Project/stock/file/total.csv')
 
 # stock = ats.get_row('stock',[('code','000416')],['country'])
-# print(sf.tuple_to_dict(stock.attribute_columns))
+# print(common.tuple_to_dict(stock.attribute_columns))

@@ -9,7 +9,7 @@ from tablestore import *
 
 import apis.futu_api as ft
 import apis.matplot as mp
-import apis.stock_formula as sf
+import apis.common
 
 client = OTSClient("https://pharaontrade.cn-hangzhou.ots.aliyuncs.com", 'LTAI5tLWK2gTt8JB3kHkxyCa', 'xzlgVf6tbFBm3yNpUL54GnhdAi6oML', 'pharaontrade')
 
@@ -88,7 +88,7 @@ def main():
             attribute_columns = ['expectedIncrease','recommendationKey','averageAmplitude','beta','recommendationMean','targetMeanPrice']
             try :
                 stock_row = get_row('stock',primary_key,attribute_columns)
-                stockinfo = sf.tuple_to_dict(stock_row.attribute_columns)
+                stockinfo = common.tuple_to_dict(stock_row.attribute_columns)
                 print(pd.DataFrame.from_dict(stockinfo, orient='index'))
             except Exception as e:
                 print(e)
@@ -97,9 +97,8 @@ def main():
         except Exception as e:
             print(e)
             print('执行布林带策略出错')
-    except:
-        print('error')
-        pass
+    except Exception as e:
+        print(e)
 
 
 

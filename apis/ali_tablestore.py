@@ -2,7 +2,7 @@
 from tablestore import *
 import time
 
-import stock_formula as sf
+import common
 
 client = OTSClient("https://pharaontrade.cn-hangzhou.ots.aliyuncs.com", 'LTAI5tLWK2gTt8JB3kHkxyCa', 'xzlgVf6tbFBm3yNpUL54GnhdAi6oML', 'pharaontrade')
 
@@ -162,7 +162,7 @@ def batch_get_row(client):
 def prepare_batch_write_data(stock):
     put_row_items = []
     for index, row in stock.iterrows():
-        primary_key = [['code',sf.remove_suffix(row.loc['ts_code'])], ['_date',row.loc['trade_date']]]
+        primary_key = [['code',common.remove_suffix(row.loc['ts_code'])], ['_date',row.loc['trade_date']]]
         k = tuple(row.to_dict())
         v= tuple(row.to_dict().values())
         attribute_columns = list(zip(tuple(row.to_dict()),row.to_dict().values()))
@@ -176,7 +176,7 @@ def prepare_batch_write_data(stock):
 def prepare_data(stock):
     for index, row in stock.iterrows():
         try :
-            primary_key = [['code',sf.remove_suffix(row.loc['ts_code'])], ['_date',row.loc['trade_date']]]
+            primary_key = [['code',common.remove_suffix(row.loc['ts_code'])], ['_date',row.loc['trade_date']]]
             k = tuple(row.to_dict())
             v= tuple(row.to_dict().values())
             attribute_columns = list(zip(tuple(row.to_dict()),row.to_dict().values()))

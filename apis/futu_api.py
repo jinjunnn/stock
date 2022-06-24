@@ -93,34 +93,7 @@ def get_history_kline(stock_code,ktype,start_date, end_date):
     if ret == RET_OK:
         quote_ctx.close() # 结束后记得关闭当条连接，防止连接条数用尽
         return data
-        # print(data)
-        # print(data['code'][0])    # 取第一条的股票代码
-        # print(data['close'].values.tolist())   # 第一页收盘价转为 list
     else:
         print('error:', data)
-    # while page_req_key != None:  # 请求后面的所有结果
-    #     print('*************************************')
-    #     ret, data, page_req_key = quote_ctx.request_history_kline('HK.00700', start='2019-09-11', end='2019-09-18', max_count=5, page_req_key=page_req_key) # 请求翻页后的数据
-    #     if ret == RET_OK:
-    #         print(data)
-    #     else:
-    #         print('error:', data)
-    # print('All pages are finished!')
-    
 
-# result = get_history_kline('SZ.000960', 'K_15M',None,None)
-# print(result)
-# class PriceReminderTest(PriceReminderHandlerBase):
-#     def on_recv_rsp(self, rsp_pb):
-#         ret_code, content = super(PriceReminderTest,self).on_recv_rsp(rsp_pb)
-#         if ret_code != RET_OK:
-#             print("PriceReminderTest: error, msg: %s" % content)
-#             return RET_ERROR, content
-#         print("PriceReminderTest ", content) # PriceReminderTest 自己的处理逻辑
-#         return RET_OK, content
-        
-# quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
-# handler = PriceReminderTest()
-# quote_ctx.set_handler(handler)  # 设置到价提醒通知回调
-# time.sleep(15)  # 设置脚本接收 FutuOpenD 的推送持续时间为15秒
-# quote_ctx.close()   # 关闭当条连接，FutuOpenD 会在1分钟后自动取消相应股票相应类型的订阅
+result = get_history_kline('SZ.000960', 'K_15M','2021-06-01','2021-09-01')

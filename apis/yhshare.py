@@ -8,7 +8,7 @@ import time
 import lean_cloud as lc
 import ali_tablestore as ats
 import stock_output as so
-import stock_formula as sf
+import common
 import ali_tablestore as ats
 
 
@@ -68,7 +68,7 @@ def iter_stock_infomations(resource_path):
                 if stock[key] == None:
                     stock.pop(key)
 
-            primary_key = [['code', sf.remove_suffix(im[1])]]
+            primary_key = [['code', common.remove_suffix(im[1])]]
             attribute_columns = list(zip(tuple(stock), stock.values()))
             print(primary_key)
             ats.put_row('stock',primary_key,attribute_columns)
@@ -120,7 +120,7 @@ def iter_stock_infomations(resource_path):
         #         for key in list(stock.keys()):
         #             if stock[key] == None:
         #                 stock.pop(key)
-        #         primary_key = [['code', sf.remove_suffix(im[1])]]
+        #         primary_key = [['code', common.remove_suffix(im[1])]]
         #         attribute_columns = list(zip(tuple(stock), stock.values()))
         #         print(attribute_columns)
         #         ats.put_row('stock',primary_key,attribute_columns)

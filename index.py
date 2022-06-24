@@ -10,7 +10,7 @@ import sys
 sys.path.append("./apis")
 import stock_api as sa
 import matplot as mp
-import stock_formula as sf
+import common
 
 # 设置条件，将符合条件的股票上传到富途证券APP
 
@@ -33,8 +33,8 @@ def main(df):
 # 定义一个主函数
 if __name__ == '__main__':
     code = '000043.SH'
-    start_date = sf.today_int_shift(1000)
-    end_date = sf.today_int()
+    start_date = common.today_int_shift(1000)
+    end_date = common.today_int()
     df = sa.get_index_daily(code, start_date=start_date, end_date=end_date)
     print(df)
     main(df)
