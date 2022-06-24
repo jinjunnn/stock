@@ -15,7 +15,6 @@ import pandas_ta as pa
 
 import stock_api as sa
 import stock_output as so
-import stock_formula as sf
 import futu_api as fa
 import tg
 import ali_tablestore as ats

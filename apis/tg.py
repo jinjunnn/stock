@@ -13,5 +13,11 @@ bot = telebot.TeleBot(api_key, parse_mode=None)
 
 # 2013737722  这个是我的TELEGRAM ID
 
-def send_word(_id,_message):
-    bot.send_message(_id, _message)
+def handle_messages(messages):
+    for message in messages:
+    # Do something with the message
+        bot.reply_to(message, 'Hi')
+
+# bot.set_update_listener(handle_messages)
+# bot.infinity_polling()
+

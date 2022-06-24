@@ -102,8 +102,13 @@ def put_row(table_name,primary_key,attribute_columns):
 
 def get_row(table_name,primary_key,columns_to_get):
     consumed, return_row, next_token = client.get_row(table_name, primary_key, columns_to_get)
-    print ('Read succeed, consume %s read cu.' % consumed.read)
+    # print ('Read succeed, consume %s read cu.' % consumed.read)
+    # print ('Value of primary key: %s' % return_row.primary_key)
+    # print ('Value of attribute: %s' % return_row.attribute_columns)
     return(return_row)
+
+# stock = get_row('stock',[('code','000416')],['totalCash'])
+# print(stock)
 
 
 # 批量写入数据的上限是一次200行。

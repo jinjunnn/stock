@@ -17,8 +17,6 @@ import matplotlib.cbook as cbook
 
 
 import apis.stock_api as sa
-import apis.stock_output as so
-import apis.stock_formula as sf
 import apis.futu_api as fa
 import apis.matplot as mp
 

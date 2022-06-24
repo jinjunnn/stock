@@ -14,95 +14,6 @@ import talib as ta
 import pandas_ta as pa
 from decimal import Decimal
 
-# 计算一个区间的总额
-def sum_of_columns(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name + timeperiod:row.name, _key]
-        return result.sum()
-    except:
-        pass
-
-# 计算一个区间的均值
-def avg_of_columns(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name + timeperiod:row.name, _key]
-        return result.sum() / timeperiod
-    except:
-        pass
-
-# 计算量比
-def volume_ratio(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name + timeperiod:row.name + 1, _key]
-        return stock.loc[row.name,_key] / result.mean()
-    except:
-        pass
-
-# 查看某个字段未来几日的涨跌幅度
-def forcasting(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name -1:row.name - timeperiod, _key]
-        return result.sum()
-    except:
-        pass
-
-
-def max_of_columns(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name + timeperiod:row.name + 1, _key]
-        return result.max()
-    except:
-        pass
-
-def min_of_columns(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name + timeperiod:row.name + 1, _key]
-        return result.min()
-    except:
-        pass
-
-# 从最高值下降了的百分比
-def falling_rate(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name + timeperiod:row.name, _key]
-        _max = result.max()
-        _current = row.loc[_key]
-        return (_current - _max) / _max
-    except:
-        pass
-
-# 从最低值上升了的百分比
-def rising_rate(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name + timeperiod:row.name, _key]
-        _min = result.min()
-        _current = row.loc[_key]
-        return (_current - _min) / _min
-    except:
-        pass
-
-# 最高点到最低点的变化百分比
-def max_changing_rate(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name + timeperiod:row.name, _key]
-        _max = result.max()
-        _min = result.min()
-        return (_max - _min) / _max
-    except:
-        pass
-
-# 当前值在最高值和最低值的区间 的百分比
-def stoch(stock,row,timeperiod,_key):
-    try:
-        result = stock.loc[row.name + timeperiod:row.name, _key]
-        _max = result.max()
-        _min = result.min()
-        _current = row.loc[_key]
-        result = (_current - _min) / (_max - _min) if (_max - _min) != 0 else 0
-        return result
-    except:
-        pass
-
 #去掉股票后缀
 def remove_suffix(stock_code):
     if stock_code[0] == '6':
@@ -110,7 +21,7 @@ def remove_suffix(stock_code):
     else:
         return stock_code[0:6]
 
-# 将股票代码和股票交易所翻转, 如: 600000.SH -> SH.600000
+# 将股票代码和股票交易所翻转, 如: 600000.SH -> SH.600000,用于富途API
 def modify_stockcode(stock_code):
     if stock_code[0] == '6':
         return 'SH.' + stock_code[0:6]
@@ -171,5 +82,21 @@ def dict_to_tuple(d):
 
 # 元组解析为字典
 def tuple_to_dict(l):
-    k,v = zip(*l)
-    return dict(zip(k,v))
+    x,y,z = zip(*l)
+    return dict(zip(x,y))
+
+#字符串类型的数据，用于查询富途数据
+def date_shift(days):
+    return (datetime.datetime.now()-datetime.timedelta(days=days)).strftime('%Y-%m-%d')
+
+#字符串类型的数据，用于查询富途数据
+def today():
+    return datetime.datetime.now().strftime('%Y-%m-%d')
+
+# 数字类型的日期，用于 yfinance 查询数据
+def today_int():
+    return int(datetime.datetime.now().strftime('%Y%m%d'))
+
+# 数字类型的日期，用于 yfinance 查询数据
+def today_int_shift(days):
+    return int((datetime.datetime.now()-datetime.timedelta(days=days)).strftime('%Y%m%d'))
