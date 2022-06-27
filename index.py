@@ -20,7 +20,6 @@ def get_index_list(market):
     print('completed')
 # get_index_list('SW')
 
-
 def main(df):
     try:
         sa.add_alligator(df)

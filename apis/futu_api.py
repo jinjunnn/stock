@@ -63,7 +63,7 @@ def upload_stock_to_futu(resource_path,futu_stock_list_name):
 
 
 # 富途股票订阅
-def futu_subscribe(stocklist):
+def subscribe(stocklist):
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
     ret, data = quote_ctx.subscribe(stocklist, SubType.QUOTE)
     if ret == RET_OK:
@@ -76,7 +76,7 @@ def futu_subscribe(stocklist):
 # print(result)
 
 # 查询订阅数量
-def query_futu_subscribe():
+def query_subscribe():
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
     ret, data = quote_ctx.query_subscription()
     if ret == RET_OK:
@@ -85,15 +85,44 @@ def query_futu_subscribe():
         print('error:', data)
     quote_ctx.close() # 结束后记得关闭当条连接，防止连接条数用尽
 
+def unsubscribe():
+    pass
+
 
 # 获取历史k线数据,必须中国 IP 才可以获得这个权限。
-def get_history_kline(stock_code,ktype,start_date, end_date):
+def get_history_kline(stocklist,ktype,start_date, end_date):
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
-    ret, data, page_req_key = quote_ctx.request_history_kline(stock_code, start=start_date, end=end_date, ktype=ktype,max_count=1000,autype=AuType.QFQ)  # 每页5个，请求第一页
+    ret, data, page_req_key = quote_ctx.request_history_kline(stocklist, start=start_date, end=end_date, ktype=ktype,max_count=1000,autype=AuType.QFQ)  # 每页5个，请求第一页
     if ret == RET_OK:
         quote_ctx.close() # 结束后记得关闭当条连接，防止连接条数用尽
         return data
     else:
         print('error:', data)
+        quote_ctx.close() # 结束后记得关闭当条连接，防止连接条数用尽
 
-result = get_history_kline('SZ.000960', 'K_15M','2021-06-01','2021-09-01')
+# result = get_history_kline('SZ.000960', 'K_15M','2021-06-01','2021-09-01')
+# print(result)
+
+
+def get_realtime_kline(stocklist, ktype, start_date, end_date,amount):
+    # amount 是 k线的数量
+    subscribe_type = [SubType.K_30M] if ktype == 30 else ([SubType.K_15M] if ktype == 15 else ([SubType.K_5M] if ktype == 5 else [SubType.K_60M])) # 设置 K线时间长度
+    quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+    quote_ctx.unsubscribe_all()
+    if ret_unsub == RET_OK:#  先取消所有历史订阅，防止连接条数用尽
+        ret_sub, err_message = quote_ctx.subscribe(stocklist, subscribe_type, subscribe_push=False)
+        if ret_sub == RET_OK:  # 订阅成功
+            for item in stocklist:
+                ret, data = quote_ctx.get_cur_kline(item, amount, subscribe_type[0], AuType.QFQ)  # 获取港股00700最近2个 K 线数据
+                if ret == RET_OK:
+                    print(data)
+                    # print(data['turnover_rate'][0])   # 取第一条的换手率
+                    # print(data['turnover_rate'].values.tolist())   # 转为 list
+                    
+                else:
+                    print('error:', data)
+        else:
+            print('subscription failed', err_message)
+    else:
+        print('Failed to cancel all subscriptions！', err_message_unsub)
+    quote_ctx.close()  # 关闭当条连接，FutuOpenD 会在1分钟后自动取消相应股票相应类型的订阅
