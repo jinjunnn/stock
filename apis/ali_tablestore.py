@@ -4,7 +4,7 @@ import time
 
 import common
 
-client = OTSClient("https://pharaontrade.cn-hangzhou.ots.aliyuncs.com", 'LTAI5tLWK2gTt8JB3kHkxyCa', 'xzlgVf6tbFBm3yNpUL54GnhdAi6oML', 'pharaontrade')
+
 
 def create_table(client, table_name):
     schema_of_primary_key = [('gid', 'INTEGER'), ('uid', 'INTEGER')]
