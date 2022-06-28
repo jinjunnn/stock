@@ -1,5 +1,97 @@
 from futu import *
 import csv
+import datetime
+import pandas_ta as pa
+import matplotlib.pyplot as plt
+import matplotlib.cbook as cbook
+from matplotlib.pyplot import MultipleLocator
+
+
+def modify_stocklist(stocklist):
+    _list = []
+    for item in stocklist:
+        if item[0] == '6':
+            _list.append('SH.' + item[0:6]) 
+        else:
+            _list.append('SZ.' + item[0:6])
+    return _list
+
+#字符串类型的数据，用于查询富途数据
+def date_shift(days):
+    return (datetime.datetime.now()-datetime.timedelta(days=days)).strftime('%Y-%m-%d')
+
+#字符串类型的数据，用于查询富途数据
+def today():
+    return datetime.datetime.now().strftime('%Y-%m-%d')
+
+def send_photo(chat_id,url):
+    photo = open(url, 'rb')
+    bot.send_photo(chat_id, photo)
+
+def send_text(chat_id,text):
+    bot.send_message(chat_id, text)
+
+def plot_boolinger(df,stock_code,image_url):
+    fig, axs = plt.subplots(4, 1)
+    axs[0].plot(df['time_key'], df['hlc3'],label='hlc3')
+    axs[0].plot(df['time_key'], df['ema_upper'],label='boollinger_upper')
+    axs[0].plot(df['time_key'], df['ema_lower'],label='boollinger_lower')
+    axs[0].plot(df['time_key'], df['ema'],label='boollinger_middle')
+    axs[0].set_ylabel('Price')
+    axs[0].set_title(stock_code)
+    #设置时间刻度
+    axs[0].xaxis.set_major_locator(MultipleLocator(40))
+    # axs[0].text(0.95, 0.01, 'colored text in axes coords',verticalalignment='top', horizontalalignment='left',transform=ax.transAxes,fontsize=12)
+    # ax.invert_xaxis() // 切换X轴方向
+    axs[0].legend()
+
+    axs[1].bar(df['time_key'], df['volume'],label='volume')
+    #设置时间刻度
+    axs[1].xaxis.set_major_locator(MultipleLocator(40))
+
+    axs[2].plot(df['time_key'], df['spike'],label='spike')
+    axs[2].plot(df['time_key'], df['spike_upper'],label='spike_upper')
+    axs[2].plot(df['time_key'], df['spike_lower'],label='spike_lower')
+    axs[2].legend()
+    #设置时间刻度
+    axs[2].xaxis.set_major_locator(MultipleLocator(40))
+
+    axs[3].plot(df['time_key'], df['macd'],label='macd')
+    axs[3].plot(df['time_key'], df['signal'],label='signal')
+    axs[3].bar(df['time_key'], df['histogram'],label='histogram')
+    axs[3].legend()
+    axs[3].xaxis.set_major_locator(MultipleLocator(40))
+    plt.savefig(image_url)
+    # plt.show()
+
+
+def add_bollinger(df):
+    timeperiod = 20
+    try:
+        df['hlc3'] = pa.hlc3(df['high'], df['low'], df['close'])
+        bbands = pa.bbands(df['hlc3'],length = timeperiod, std=2, mamode="ema", ddof = 0)
+        df['ema_lower'] = bbands['BBL_20_2.0']
+        df['ema'] = bbands['BBM_20_2.0']
+        df['ema_upper'] = bbands['BBU_20_2.0']
+        df['bandwidth'] = bbands['BBB_20_2.0']
+        df['bandwidth_chg'] = df['bandwidth'] - bbands['BBB_20_2.0'].shift()
+        df['percent'] = bbands['BBP_20_2.0']
+
+        # 震荡指标 valotility oscillator 
+        df['spike'] = df['close'] - df['open']
+        df['spike_upper'] = pa.stdev(df['spike'], length = 100, ddof = 0)
+        df['spike_lower'] = -pa.stdev(df['spike'], length = 100, ddof = 0)
+
+        # df['ema'] = pa.ema(df['hlc3'],length=20)
+        macd = pa.macd(df['hlc3'],fast=12,slow=26,signal=9)
+        df['macd'] = macd['MACD_12_26_9']
+        df['histogram'] = macd['MACDh_12_26_9']
+        df['signal']=macd['MACDs_12_26_9']
+
+        df = df.fillna(value=0)
+        return df[20:]
+    except Exception as e:
+        return None
 
 # 将股票代码和股票交易所翻转, 如: 600000.SH -> SH.600000
 def modify_stockcode(stock_code):
@@ -108,21 +200,40 @@ def get_realtime_kline(stocklist, ktype, start_date, end_date,amount):
     # amount 是 k线的数量
     subscribe_type = [SubType.K_30M] if ktype == 30 else ([SubType.K_15M] if ktype == 15 else ([SubType.K_5M] if ktype == 5 else [SubType.K_60M])) # 设置 K线时间长度
     quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
-    quote_ctx.unsubscribe_all()
+    ret_unsub, err_message_unsub = quote_ctx.unsubscribe_all()  # 取消所有订阅
     if ret_unsub == RET_OK:#  先取消所有历史订阅，防止连接条数用尽
-        ret_sub, err_message = quote_ctx.subscribe(stocklist, subscribe_type, subscribe_push=False)
-        if ret_sub == RET_OK:  # 订阅成功
-            for item in stocklist:
-                ret, data = quote_ctx.get_cur_kline(item, amount, subscribe_type[0], AuType.QFQ)  # 获取港股00700最近2个 K 线数据
-                if ret == RET_OK:
-                    print(data)
-                    # print(data['turnover_rate'][0])   # 取第一条的换手率
-                    # print(data['turnover_rate'].values.tolist())   # 转为 list
-                    
-                else:
-                    print('error:', data)
-        else:
-            print('subscription failed', err_message)
+        ret_sub, err_message = quote_ctx.subscribe(stocklist, subscribe_type, subscribe_push=False) # 订阅
+        for i in range(25):
+            if ret_sub == RET_OK:  # 订阅成功
+                for item in stocklist:
+                    ret, data = quote_ctx.get_cur_kline(item, amount, subscribe_type[0], AuType.QFQ)  # 获取港股00700最近2个 K 线数据
+                    if ret == RET_OK:
+                        df = add_bollinger(data)
+                        # print(df)
+                        last_kline = df.iloc[-1]
+                        if last_kline['spike'] > last_kline['spike_upper']:
+                            plot_boolinger(df,item,url)#绘制并存储表格
+                            image_url = '/Users/pharaon/Downloads/stock/{}.png'.format(str(time.time()))
+                            send_photo(2013737722,url)#将绘制的表格发送到TG
+                            send_text(2013737722, last_kline)
+                        # print(data['turnover_rate'][0])   # 取第一条的换手率
+                        # print(data['turnover_rate'].values.tolist())   # 转为 list
+                    else:
+                        print('error:', data)
+            else:
+                print('subscription failed', err_message)
+            time.sleep( ktype * 60 )
     else:
         print('Failed to cancel all subscriptions！', err_message_unsub)
     quote_ctx.close()  # 关闭当条连接，FutuOpenD 会在1分钟后自动取消相应股票相应类型的订阅
+
+
+if __name__ == '__main__':
+    stocklist = ['000960','603938','002518','002463','603707','603939','003019','603218','000999','603883','002245','002960','600885','000708','601869','002984','002765','601677','000959','603808','600426','300681','300662','300136','301050','300687','300815','300984','300218','301191','300791','301058','301040','301099','300638','301221','300432','301092','300196','300395','300777','300759','300776','300476','300628','300390','300672','300482','300122','300014','300316','300496','300604','300502','300763','300775','300750','300244','300363']
+    result = modify_stocklist(stocklist)
+    print(result)
+    ktype = 15
+    start_date = date_shift(60)
+    end_date = today()
+    amount = 300
+    # get_realtime_kline(stocklist,ktype,start_date,end_date,amount)
