@@ -5,6 +5,10 @@ import pandas_ta as pa
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cbook
 from matplotlib.pyplot import MultipleLocator
+import telebot
+
+api_key = '5326945934:AAG0AYlJvGI40v9dpFHcvN64gliDDzkqGQI'
+bot = telebot.TeleBot(api_key, parse_mode=None) 
 
 
 def modify_stocklist(stocklist):
@@ -42,8 +46,8 @@ def plot_boolinger(df,stock_code,image_url):
     #设置时间刻度
     axs[0].xaxis.set_major_locator(MultipleLocator(40))
     # axs[0].text(0.95, 0.01, 'colored text in axes coords',verticalalignment='top', horizontalalignment='left',transform=ax.transAxes,fontsize=12)
-    # ax.invert_xaxis() // 切换X轴方向
-    axs[0].legend()
+    # ax.invert_xaxis() # 切换X轴方向
+    # axs[0].legend() # 设置图标标注说明
 
     axs[1].bar(df['time_key'], df['volume'],label='volume')
     #设置时间刻度
@@ -52,14 +56,14 @@ def plot_boolinger(df,stock_code,image_url):
     axs[2].plot(df['time_key'], df['spike'],label='spike')
     axs[2].plot(df['time_key'], df['spike_upper'],label='spike_upper')
     axs[2].plot(df['time_key'], df['spike_lower'],label='spike_lower')
-    axs[2].legend()
+    # axs[2].legend()
     #设置时间刻度
     axs[2].xaxis.set_major_locator(MultipleLocator(40))
 
     axs[3].plot(df['time_key'], df['macd'],label='macd')
     axs[3].plot(df['time_key'], df['signal'],label='signal')
     axs[3].bar(df['time_key'], df['histogram'],label='histogram')
-    axs[3].legend()
+    # axs[3].legend()
     axs[3].xaxis.set_major_locator(MultipleLocator(40))
     plt.savefig(image_url)
     # plt.show()
@@ -209,13 +213,13 @@ def get_realtime_kline(stocklist, ktype, start_date, end_date,amount):
                     ret, data = quote_ctx.get_cur_kline(item, amount, subscribe_type[0], AuType.QFQ)  # 获取港股00700最近2个 K 线数据
                     if ret == RET_OK:
                         df = add_bollinger(data)
-                        # print(df)
                         last_kline = df.iloc[-1]
+                        print(last_kline)
                         if last_kline['spike'] > last_kline['spike_upper']:
-                            plot_boolinger(df,item,url)#绘制并存储表格
                             image_url = '/Users/pharaon/Downloads/stock/{}.png'.format(str(time.time()))
-                            send_photo(2013737722,url)#将绘制的表格发送到TG
-                            send_text(2013737722, last_kline)
+                            plot_boolinger(df,item,image_url)#绘制并存储表格
+                            send_photo(2013737722,image_url)#将绘制的表格发送到TG
+                            send_text(2013737722, last_kline.to_string())
                         # print(data['turnover_rate'][0])   # 取第一条的换手率
                         # print(data['turnover_rate'].values.tolist())   # 转为 list
                     else:
@@ -230,10 +234,8 @@ def get_realtime_kline(stocklist, ktype, start_date, end_date,amount):
 
 if __name__ == '__main__':
     stocklist = ['000960','603938','002518','002463','603707','603939','003019','603218','000999','603883','002245','002960','600885','000708','601869','002984','002765','601677','000959','603808','600426','300681','300662','300136','301050','300687','300815','300984','300218','301191','300791','301058','301040','301099','300638','301221','300432','301092','300196','300395','300777','300759','300776','300476','300628','300390','300672','300482','300122','300014','300316','300496','300604','300502','300763','300775','300750','300244','300363']
-    result = modify_stocklist(stocklist)
-    print(result)
     ktype = 15
     start_date = date_shift(60)
     end_date = today()
     amount = 300
-    # get_realtime_kline(stocklist,ktype,start_date,end_date,amount)
+    get_realtime_kline(modify_stocklist(stocklist),ktype,start_date,end_date,amount)
