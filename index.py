@@ -1,4 +1,4 @@
-#通过鳄鱼线指标来寻找中长线的交易机会，然后通过布林带策略在趋势股中不断做短线的交易策略
+# 查询指数的信息
 #
 
 import matplotlib.pyplot as plt
@@ -25,7 +25,7 @@ def main(df):
         sa.add_alligator(df)
         sa.add_vegas(df)
         print(df.iloc[-1])
-        mp.plot_alligator(df,code)
+        mp.plot_alligator(df,code,True)
     except Exception as e:
         print(e)
 

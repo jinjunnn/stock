@@ -13,7 +13,7 @@ from telethon.tl.functions.contacts import DeleteContactsRequest# 获取联系�
 # import record
 name = 'anon'
 api_id = 8149287
-api_hash = '955176e7c610c3ad95bd018eae169339'
+# api_hash = '955176e7c610c3ad95bd018eae169339'
 
 from telethon.sync import TelegramClient
 from telethon import functions, types

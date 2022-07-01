@@ -20,7 +20,7 @@ def main(code, start_date, end_date):
         sa.add_alligator(df)
         sa.add_vegas(df)
         print(df.iloc[-1])
-        mp.plot_alligator(df,code)
+        mp.plot_alligator(df,code,True)
     except Exception as e:
         print(e)
 
@@ -28,4 +28,4 @@ def main(code, start_date, end_date):
 if __name__ == '__main__':
     start_date = common.today_int_shift(300)
     end_date = common.today_int()
-    main('000960.SZ', start_date, end_date)
+    main('600420.SH', start_date, end_date)

@@ -310,8 +310,9 @@ def add_alligator(df):
         df['alligator_width'] = (df['lips'] - df['jaw'])/ df['close'] * 100
         df['alligator_width_chg'] = df['alligator_width'] - df['alligator_width'].shift()
 
-        df = df.fillna(value=1)
+        
         df['alligator_crossover'] = pa.cross(df['close'],df['teeth']) # 收盘价穿越 中线
+        df = df.fillna(value=1)
         # df.to_csv('/Users/pharaon/Project/stock/file/test_alligator.csv', index=False, sep=',')
         return df
     except Exception as e:

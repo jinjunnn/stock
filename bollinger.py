@@ -40,9 +40,6 @@ def get_row(table_name,primary_key,columns_to_get):
 
 def futu_bollinger_bands_strategy(df):
     timeperiod = 20
-    multup = 2.0
-    multdn =2.0
-
     try:
         df['hlc3'] = pa.hlc3(df['high'], df['low'], df['close'])
         bbands = pa.bbands(df['hlc3'],length = timeperiod, std=2, mamode="ema", ddof = 0)
@@ -50,8 +47,12 @@ def futu_bollinger_bands_strategy(df):
         df['ema'] = bbands['BBM_20_2.0']
         df['ema_upper'] = bbands['BBU_20_2.0']
         df['bandwidth'] = bbands['BBB_20_2.0']
+        df['bandwidth_redio'] = df['bandwidth'] / df['ema'] * 100
         df['bandwidth_chg'] = df['bandwidth'] - bbands['BBB_20_2.0'].shift()
         df['percent'] = bbands['BBP_20_2.0']
+        df['close_crossover_ema'] = pa.cross(df['close'],df['ema']) # 收盘价穿越 中线
+
+        # 震荡指标 valotility oscillator 
         df['spike'] = df['close'] - df['open']
         df['spike_upper'] = pa.stdev(df['spike'], length = 100, ddof = 0)
         df['spike_lower'] = -pa.stdev(df['spike'], length = 100, ddof = 0)
@@ -61,12 +62,13 @@ def futu_bollinger_bands_strategy(df):
         df['macd'] = macd['MACD_12_26_9']
         df['histogram'] = macd['MACDh_12_26_9']
         df['signal']=macd['MACDs_12_26_9']
+        df['macd_chg'] = (df['macd'] - df['macd'].shift())/df['macd'].shift() * 100  # macd 变动比率
+        df['macd_crossover_signal'] = pa.cross(df['macd'],df['signal']) # 收盘价穿越 中线
 
         df = df.fillna(value=0)
         return df[20:]
     except Exception as e:
         print(e)
-        print(12314)
         return None
 
 
@@ -93,7 +95,11 @@ def main():
             except Exception as e:
                 print(e)
             print(stock.iloc[-1])
-            mp.plot_boolinger(stock,code)
+            stock.to_csv('stock/12344.csv', index=False, sep=',')
+            image_url = '/Users/pharaon/Downloads/stock/{}.png'.format(str(time.time()))
+            last_kline = stock.iloc[-1]
+            print(stock)
+            mp.plot_boolinger(stock,code,image_url,last_kline)
         except Exception as e:
             print(e)
             print('执行布林带策略出错')

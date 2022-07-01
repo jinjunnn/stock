@@ -7,26 +7,11 @@ import matplotlib.cbook as cbook
 from matplotlib.pyplot import MultipleLocator
 import telebot
 
-api_key = '5326945934:AAG0AYlJvGI40v9dpFHcvN64gliDDzkqGQI'
+api_key = '5326945934:AAHhxIoe08JaW7wNi1nGsInUcbq5MeOieOE'
 bot = telebot.TeleBot(api_key, parse_mode=None) 
 
 
-def modify_stocklist(stocklist):
-    _list = []
-    for item in stocklist:
-        if item[0] == '6':
-            _list.append('SH.' + item[0:6]) 
-        else:
-            _list.append('SZ.' + item[0:6])
-    return _list
 
-#字符串类型的数据，用于查询富途数据
-def date_shift(days):
-    return (datetime.datetime.now()-datetime.timedelta(days=days)).strftime('%Y-%m-%d')
-
-#字符串类型的数据，用于查询富途数据
-def today():
-    return datetime.datetime.now().strftime('%Y-%m-%d')
 
 def send_photo(chat_id,url):
     photo = open(url, 'rb')
@@ -35,9 +20,8 @@ def send_photo(chat_id,url):
 def send_text(chat_id,text):
     bot.send_message(chat_id, text)
 
-def plot_boolinger(df,stock_code,image_url):
-    last_kline = df.iloc[-1]
-    table_title = 'Important ***{}-- {}'.format(stock_code,last_kline['time_key']) if last_kline['close_crossover_ema'] == 0 and last_kline['close_crossover_ema'] == 0 else '{}--{}'.format(stock_code,last_kline['time_key'])
+def plot_boolinger(df,stock_code,image_url,last_kline):
+    table_title = 'Important ***{}-- {}'.format(stock_code,last_kline['time_key']) if last_kline['close_crossover_ema'] == 1 and last_kline['macd_crossover_signal'] == 1 else ('macd crossover signal--{}--{}'.format(stock_code,last_kline['time_key']) if last_kline['macd_crossover_signal'] == 1 else '{}--{}'.format(stock_code,last_kline['time_key']))
     fig, axs = plt.subplots(4, 1)
     axs[0].plot(df['time_key'], df['hlc3'],label='hlc3')
     axs[0].plot(df['time_key'], df['ema_upper'],label='boollinger_upper')
@@ -94,11 +78,13 @@ def add_bollinger(df):
         df['macd'] = macd['MACD_12_26_9']
         df['histogram'] = macd['MACDh_12_26_9']
         df['signal']=macd['MACDs_12_26_9']
+        df['macd_chg'] = (df['macd'] - df['macd'].shift())/df['macd'].shift() * 100  # macd 变动比率
         df['macd_crossover_signal'] = pa.cross(df['macd'],df['signal']) # 收盘价穿越 中线
 
         df = df.fillna(value=0)
         return df[20:]
     except Exception as e:
+        print(e)
         return None
 
 # 将股票代码和股票交易所翻转, 如: 600000.SH -> SH.600000
@@ -214,36 +200,33 @@ def get_realtime_kline(stocklist, ktype, start_date, end_date,amount):
         for i in range(25):
             if ret_sub == RET_OK:  # 订阅成功
                 for item in stocklist:
-                    print(item)
+                    # print(item)
                     ret, data = quote_ctx.get_cur_kline(item, amount, subscribe_type[0], AuType.QFQ)  # 获取港股00700最近2个 K 线数据
                     if ret == RET_OK:
                         df = add_bollinger(data)
-                        last_kline = df.iloc[-1]
-                        if last_kline['spike'] > last_kline['spike_upper']:
+                        last_kline = df.iloc[-2]
+                        if last_kline['spike'] > last_kline['spike_upper'] and last_kline['macd_chg'] > 0:
                             image_url = '/Users/pharaon/Downloads/stock/{}.png'.format(str(time.time()))
                             print(last_kline)
-                            plot_boolinger(df,item,image_url)#绘制并存储表格
+                            plot_boolinger(df,item,image_url,last_kline)#绘制并存储表格
                             send_photo(2013737722,image_url)#将绘制的表格发送到TG
-                            send_text(2013737722, last_kline.to_string())
+                            # send_text(2013737722, last_kline.to_string())
                         # print(data['turnover_rate'][0])   # 取第一条的换手率
                         # print(data['turnover_rate'].values.tolist())   # 转为 list
+                        if last_kline['macd_crossover_signal']==1:
+                            image_url = '/Users/pharaon/Downloads/stock/{}.png'.format(str(time.time()))
+                            plot_boolinger(df,item,image_url,last_kline)#绘制并存储表格
+                            send_photo(2013737722,image_url)#将绘制的表格发送到TG
+                            # send_text(2013737722, last_kline.to_string())
                     else:
                         print('error:', data)
             else:
                 print('subscription failed', err_message)
-            time.sleep( ktype * 20 )
+            time.sleep( ktype * 60 )
     else:
         print('Failed to cancel all subscriptions！', err_message_unsub)
     quote_ctx.close()  # 关闭当条连接，FutuOpenD 会在1分钟后自动取消相应股票相应类型的订阅
 
-
-if __name__ == '__main__':
-    stocklist = ['000960','603938','002518','002463','603707','603939','003019','603218','000999','603883','002245','002960','600885','000708','601869','002984','002765','601677','000959','603808','600426','300681','300662','300136','301050','300687','300815','300984','300218','301191','300791','301058','301040','301099','300638','301221','300432','301092','300196','300395','300777','300759','300776','300476','300628','300390','300672','300482','300122','300014','300316','300496','300604','300502','300763','300775','300750','300244','300363','002989','603039','601882','002585','603113','600765','003029','002960','002649','002648','603663','002915','002968','603233','002859','605066','002009','002335','603588','603877','605090','605398','002191','002008','603565','600782','601677','000811','002978','002886','601163','002429','605189','603678','600150','600282','600038','603809','600729','603587','605060']
-    ktype = 15
-    start_date = date_shift(60)
-    end_date = today()
-    amount = 300
-    get_realtime_kline(modify_stocklist(stocklist),ktype,start_date,end_date,amount)
 
 
 

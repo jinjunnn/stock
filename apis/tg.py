@@ -1,6 +1,6 @@
 import telebot
 
-api_key = '5326945934:AAG0AYlJvGI40v9dpFHcvN64gliDDzkqGQI'
+api_key = '5326945934:AAHhxIoe08JaW7wNi1nGsInUcbq5MeOieOE'
 bot = telebot.TeleBot(api_key, parse_mode=None) 
 # @bot.message_handler(commands=['start','help'])
 
@@ -26,8 +26,10 @@ def send_photo(chat_id,url):
     photo = open(url, 'rb')
     bot.send_photo(chat_id, photo)
 
+send_text(2013737722,'HI')
+
 
 # 设置监听者
-bot.set_update_listener(handle_messages)
-bot.infinity_polling()
+# bot.set_update_listener(handle_messages)
+# bot.infinity_polling()
 

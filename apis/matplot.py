@@ -35,7 +35,8 @@ def plot_scatter(df,xkey,ykey,title):
     axs.xaxis.set_major_locator(MultipleLocator(40))
     plt.show()
 
-def plot_alligator(df,stock_code):
+def plot_alligator(df,stock_code,show):
+    last_kline = df.iloc[-1]
     fig, axs = plt.subplots(2, 1)
     axs[0].plot(df['trade_date'], df['close'],label='close')
     axs[0].plot(df['trade_date'], df['jaw'],label='jaw')
@@ -44,7 +45,7 @@ def plot_alligator(df,stock_code):
     axs[0].plot(df['trade_date'], df['ema144'],label='ema144')
     axs[0].plot(df['trade_date'], df['ema169'],label='ema169')
     axs[0].set_ylabel('Price')
-    axs[0].set_title(stock_code)
+    axs[0].set_title('{}--{}'.format(stock_code,last_kline['trade_date']))
     axs[0].xaxis.set_major_locator(MultipleLocator(40))    #设置时间刻度
     # ax.invert_xaxis() // 切换X轴方向
     axs[0].legend()
@@ -53,44 +54,42 @@ def plot_alligator(df,stock_code):
     axs[1].bar(df['trade_date'], df['vol'],label='vol')
     #设置时间刻度
     axs[1].xaxis.set_major_locator(MultipleLocator(40))
-    plt.show()
+    plt.show() if show == True else plt.savefig(image_url,dpi=1600)
 
 
 
-def plot_boolinger(df,stock_code):
+def plot_boolinger(df,stock_code,image_url,last_kline):
+    table_title = 'Important ***{}-- {}'.format(stock_code,last_kline['time_key']) if last_kline['close_crossover_ema'] == 1 and last_kline['macd_crossover_signal'] == 1 else ('macd crossover signal--{}--{}'.format(stock_code,last_kline['time_key']) if last_kline['macd_crossover_signal'] == 1 else '{}--{}'.format(stock_code,last_kline['time_key']))
     fig, axs = plt.subplots(4, 1)
     axs[0].plot(df['time_key'], df['hlc3'],label='hlc3')
     axs[0].plot(df['time_key'], df['ema_upper'],label='boollinger_upper')
     axs[0].plot(df['time_key'], df['ema_lower'],label='boollinger_lower')
     axs[0].plot(df['time_key'], df['ema'],label='boollinger_middle')
     axs[0].set_ylabel('Price')
-    axs[0].set_title(stock_code)
+    axs[0].set_title(table_title)
     #设置时间刻度
     axs[0].xaxis.set_major_locator(MultipleLocator(40))
-    # ax.invert_xaxis() // 切换X轴方向
-    axs[0].legend()
+    # axs[0].text(0.95, 0.01, 'colored text in axes coords',verticalalignment='top', horizontalalignment='left',transform=ax.transAxes,fontsize=12)
+    # ax.invert_xaxis() # 切换X轴方向
+    # axs[0].legend() # 设置图标标注说明
 
-    axs[1].set_title('volume')
     axs[1].bar(df['time_key'], df['volume'],label='volume')
     #设置时间刻度
     axs[1].xaxis.set_major_locator(MultipleLocator(40))
 
-    axs[2].set_title('volatility oscillator')
     axs[2].plot(df['time_key'], df['spike'],label='spike')
     axs[2].plot(df['time_key'], df['spike_upper'],label='spike_upper')
     axs[2].plot(df['time_key'], df['spike_lower'],label='spike_lower')
-    axs[2].legend()
+    # axs[2].legend()
     #设置时间刻度
     axs[2].xaxis.set_major_locator(MultipleLocator(40))
 
-
-    axs[3].set_title('macd')
     axs[3].plot(df['time_key'], df['macd'],label='macd')
     axs[3].plot(df['time_key'], df['signal'],label='signal')
     axs[3].bar(df['time_key'], df['histogram'],label='histogram')
-    axs[3].legend()
+    # axs[3].legend()
     axs[3].xaxis.set_major_locator(MultipleLocator(40))
-    # plt.savefig('img/'+stock_code+'.png')
+    # plt.savefig(image_url,dpi=800)
     plt.show()
 
 # plot_candle(pd.read_csv('stock/testing.csv', index_col=0), '000960.SZ')
