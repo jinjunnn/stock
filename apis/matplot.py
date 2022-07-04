@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cbook as cbook
 from matplotlib.pyplot import MultipleLocator
 import pandas as pd
+import time
 
 def plot_candle(df,stock_code):
     # df['_date'] = df.apply(lambda x: x['trade_date'][-6:] ,axis=1)
@@ -34,28 +35,6 @@ def plot_scatter(df,xkey,ykey,title):
     ax.set_title(title)
     axs.xaxis.set_major_locator(MultipleLocator(40))
     plt.show()
-
-def plot_alligator(df,stock_code,show):
-    last_kline = df.iloc[-1]
-    fig, axs = plt.subplots(2, 1)
-    axs[0].plot(df['trade_date'], df['close'],label='close')
-    axs[0].plot(df['trade_date'], df['jaw'],label='jaw')
-    axs[0].plot(df['trade_date'], df['teeth'],label='teeth')
-    axs[0].plot(df['trade_date'], df['lips'],label='lips')
-    axs[0].plot(df['trade_date'], df['ema144'],label='ema144')
-    axs[0].plot(df['trade_date'], df['ema169'],label='ema169')
-    axs[0].set_ylabel('Price')
-    axs[0].set_title('{}--{}'.format(stock_code,last_kline['trade_date']))
-    axs[0].xaxis.set_major_locator(MultipleLocator(40))    #设置时间刻度
-    # ax.invert_xaxis() // 切换X轴方向
-    axs[0].legend()
-
-    axs[1].set_title('volume')
-    axs[1].bar(df['trade_date'], df['vol'],label='vol')
-    #设置时间刻度
-    axs[1].xaxis.set_major_locator(MultipleLocator(40))
-    plt.show() if show == True else plt.savefig(image_url,dpi=1600)
-
 
 
 def plot_boolinger(df,stock_code,image_url,last_kline):
@@ -93,3 +72,32 @@ def plot_boolinger(df,stock_code,image_url,last_kline):
     plt.show()
 
 # plot_candle(pd.read_csv('stock/testing.csv', index_col=0), '000960.SZ')
+
+def plot_longterm(df,stock_code,show,image_url):
+    last_kline = df.iloc[-1]
+    fig, axs = plt.subplots(3, 1)
+    axs[0].plot(df['trade_date'], df['close'],label='close')
+    axs[0].plot(df['trade_date'], df['ema_upper'],label='boollinger_upper')
+    axs[0].plot(df['trade_date'], df['ema_lower'],label='boollinger_lower')
+    axs[0].plot(df['trade_date'], df['ema'],label='boollinger_middle')
+    axs[0].set_xlabel('Date')
+    axs[0].set_ylabel('Price')
+    axs[0].set_title('{}--{}'.format(stock_code,last_kline['trade_date']))
+    axs[0].legend()# 添加图标说明
+    axs[0].xaxis.set_major_locator(MultipleLocator(40))# 添加刻度
+
+    axs[1].plot(df['trade_date'], df['close'],label='close')
+    axs[1].plot(df['trade_date'], df['jaw'],label='jaw')
+    axs[1].plot(df['trade_date'], df['teeth'],label='teeth')
+    axs[1].plot(df['trade_date'], df['lips'],label='lips')
+    axs[1].plot(df['trade_date'], df['ema144'],label='ema144')
+    axs[1].plot(df['trade_date'], df['ema169'],label='ema169')
+    axs[1].xaxis.set_major_locator(MultipleLocator(40))    #设置时间刻度
+    # ax.invert_xaxis() // 切换X轴方向
+    axs[1].legend()
+
+    axs[2].set_title('volume')
+    axs[2].bar(df['trade_date'], df['vol'],label='vol')
+    #设置时间刻度
+    axs[2].xaxis.set_major_locator(MultipleLocator(40))
+    plt.show() if show == True else plt.savefig(image_url,dpi=1600)

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cbook as cbook
 import pandas_ta as pa
 import csv
-import time 
+import time
 
 import sys
 sys.path.append("./apis")
@@ -21,12 +21,16 @@ def main(source_path,start_date,end_date):
             # 设置鳄鱼线
             sa.add_alligator(df)
             sa.add_vegas(df)
+            sa.add_bollinger(df)
             last_kline = df.iloc[-1]
-            
-            # df.to_csv('/Users/pharaon/Project/stock/stock/test_total.csv')
+            print(last_kline)
             show_plot = False
-            mp.plot_alligator(df,item[1],show_plot) if last_kline['alligator_crossover'] == 1 else None
-            time.sleep(1) if show_plot == False else None
+            image_url_bollinger = '/Users/pharaon/Downloads/bollinger/{}.png'.format(str(time.time()))
+            image_url_longterm = '/Users/pharaon/Downloads/longterm/{}.png'.format(str(time.time()))
+            mp.plot_longterm(df,item[1],show_plot,image_url_longterm) if last_kline['alligator_crossover'] == 1 else None
+            mp.plot_longterm(df,item[1],show_plot,image_url_bollinger) if last_kline['bollinger_crossover'] == 1 else None
+            if show_plot == False:
+                time.sleep(1)
         except Exception as e:
             print(e)
 

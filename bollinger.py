@@ -6,10 +6,11 @@ import datetime
 import pandas_ta as pa
 from tablestore import *
 
-
-import apis.futu_api as ft
-import apis.matplot as mp
-import apis.common
+import sys
+sys.path.append("./apis")
+import futu_api as ft
+import matplot as mp
+import common
 
 client = OTSClient("https://pharaontrade.cn-hangzhou.ots.aliyuncs.com", 'LTAI5tLWK2gTt8JB3kHkxyCa', 'xzlgVf6tbFBm3yNpUL54GnhdAi6oML', 'pharaontrade')
 
@@ -38,42 +39,8 @@ def get_row(table_name,primary_key,columns_to_get):
     # print ('Value of attribute: %s' % return_row.attribute_columns)
     return(return_row)
 
-def futu_bollinger_bands_strategy(df):
-    timeperiod = 20
-    try:
-        df['hlc3'] = pa.hlc3(df['high'], df['low'], df['close'])
-        bbands = pa.bbands(df['hlc3'],length = timeperiod, std=2, mamode="ema", ddof = 0)
-        df['ema_lower'] = bbands['BBL_20_2.0']
-        df['ema'] = bbands['BBM_20_2.0']
-        df['ema_upper'] = bbands['BBU_20_2.0']
-        df['bandwidth'] = bbands['BBB_20_2.0']
-        df['bandwidth_redio'] = df['bandwidth'] / df['ema'] * 100
-        df['bandwidth_chg'] = df['bandwidth'] - bbands['BBB_20_2.0'].shift()
-        df['percent'] = bbands['BBP_20_2.0']
-        df['close_crossover_ema'] = pa.cross(df['close'],df['ema']) # 收盘价穿越 中线
-
-        # 震荡指标 valotility oscillator 
-        df['spike'] = df['close'] - df['open']
-        df['spike_upper'] = pa.stdev(df['spike'], length = 100, ddof = 0)
-        df['spike_lower'] = -pa.stdev(df['spike'], length = 100, ddof = 0)
-
-        # df['ema'] = pa.ema(df['hlc3'],length=20)
-        macd = pa.macd(df['hlc3'],fast=12,slow=26,signal=9)
-        df['macd'] = macd['MACD_12_26_9']
-        df['histogram'] = macd['MACDh_12_26_9']
-        df['signal']=macd['MACDs_12_26_9']
-        df['macd_chg'] = (df['macd'] - df['macd'].shift())/df['macd'].shift() * 100  # macd 变动比率
-        df['macd_crossover_signal'] = pa.cross(df['macd'],df['signal']) # 收盘价穿越 中线
-
-        df = df.fillna(value=0)
-        return df[20:]
-    except Exception as e:
-        print(e)
-        return None
-
-
 #创建主函数
-def main():
+def doit():
     # 获取股票代码
     code_row = input('input code = ')
     timelength = str(input('how many minite = '))
@@ -84,7 +51,7 @@ def main():
     try :
         df = ft.get_history_kline(code, 'K_{}M'.format(timelength), date_shift(int(30)), today())
         try :
-            stock = futu_bollinger_bands_strategy(df)
+            stock = ft.add_bollinger(df)
             #打印df最后一行
             primary_key =[('code',code_row)]
             attribute_columns = ['expectedIncrease','recommendationKey','averageAmplitude','beta','recommendationMean','targetMeanPrice']
@@ -100,14 +67,18 @@ def main():
             last_kline = stock.iloc[-1]
             print(stock)
             mp.plot_boolinger(stock,code,image_url,last_kline)
+            doit()
         except Exception as e:
             print(e)
             print('执行布林带策略出错')
+            doit()
     except Exception as e:
         print(e)
+        doit()
 
 
-
+def main():
+    doit()
 #执行主函数
 if __name__ == '__main__':
     main()

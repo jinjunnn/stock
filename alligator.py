@@ -13,19 +13,28 @@ import matplot as mp
 import common
 
 # 设置条件，将符合条件的股票上传到富途证券APP
-def main(code, start_date, end_date):
+def doit(code, start_date, end_date):
     try:
         df = sa.get_stock_data(code, start_date, end_date)
         # 设置鳄鱼线
         sa.add_alligator(df)
         sa.add_vegas(df)
-        print(df.iloc[-1])
-        mp.plot_alligator(df,code,True)
+        sa.add_bollinger(df)
+        mp.plot_longterm(df,code,True,True)
+        main()
     except Exception as e:
         print(e)
+        main()
+
+def main():
+    start_date = common.today_int_shift(300)
+    end_date = common.today_int()
+
+    code_row = input('input code = ')
+    code = common.add_stockcode_suffix(str(code_row))
+    print(code)
+    doit(code, start_date, end_date)
 
 # 定义一个主函数
 if __name__ == '__main__':
-    start_date = common.today_int_shift(300)
-    end_date = common.today_int()
-    main('600420.SH', start_date, end_date)
+    main()

@@ -10,8 +10,16 @@ import telebot
 api_key = '5326945934:AAHhxIoe08JaW7wNi1nGsInUcbq5MeOieOE'
 bot = telebot.TeleBot(api_key, parse_mode=None) 
 
-
-
+def stoch(stock,row,timeperiod,_key):
+    try:
+        result = stock.loc[row.name - timeperiod:row.name-1, _key]
+        _max = result.max()
+        _min = result.min()
+        _current = row.loc[_key]
+        i = (_current - _min) / (_max - _min) if (_max - _min) != 0 else 0
+        return i
+    except:
+        pass
 
 def send_photo(chat_id,url):
     photo = open(url, 'rb')
@@ -75,11 +83,14 @@ def add_bollinger(df):
 
         # df['ema'] = pa.ema(df['hlc3'],length=20)
         macd = pa.macd(df['hlc3'],fast=12,slow=26,signal=9)
-        df['macd'] = macd['MACD_12_26_9']
-        df['histogram'] = macd['MACDh_12_26_9']
-        df['signal']=macd['MACDs_12_26_9']
-        df['macd_chg'] = (df['macd'] - df['macd'].shift())/df['macd'].shift() * 100  # macd 变动比率
+        df['macd'] = macd['MACD_12_26_9']/ df['ema'] * 100
+        df['histogram'] = macd['MACDh_12_26_9']/ df['ema'] * 100
+        df['signal']=macd['MACDs_12_26_9']/ df['ema'] * 100
+        df['hist_below'] = pa.below(df['histogram'], df['histogram'].shift())
+        df['hsit_below_shift'] = df['hist_below'].shift()
+        df['hist_signal'] = df.apply(lambda x: 1 if x['hsit_below_shift'] == 1 and x['hist_below'] == 0 else (-1 if x['hsit_below_shift'] == 0 and x['hist_below'] == 1 else 0),axis=1)
         df['macd_crossover_signal'] = pa.cross(df['macd'],df['signal']) # 收盘价穿越 中线
+        df['stoch'] = df.apply(lambda x:stoch(df, x, 5, 'close'), axis=1) # 前5只k线 的位置
 
         df = df.fillna(value=0)
         return df[20:]
@@ -203,26 +214,35 @@ def get_realtime_kline(stocklist, ktype, start_date, end_date,amount):
                     # print(item)
                     ret, data = quote_ctx.get_cur_kline(item, amount, subscribe_type[0], AuType.QFQ)  # 获取港股00700最近2个 K 线数据
                     if ret == RET_OK:
-                        df = add_bollinger(data)
-                        last_kline = df.iloc[-2]
-                        if last_kline['spike'] > last_kline['spike_upper'] and last_kline['macd_chg'] > 0:
-                            image_url = '/Users/pharaon/Downloads/stock/{}.png'.format(str(time.time()))
-                            print(last_kline)
-                            plot_boolinger(df,item,image_url,last_kline)#绘制并存储表格
-                            send_photo(2013737722,image_url)#将绘制的表格发送到TG
-                            # send_text(2013737722, last_kline.to_string())
-                        # print(data['turnover_rate'][0])   # 取第一条的换手率
-                        # print(data['turnover_rate'].values.tolist())   # 转为 list
-                        if last_kline['macd_crossover_signal']==1:
-                            image_url = '/Users/pharaon/Downloads/stock/{}.png'.format(str(time.time()))
-                            plot_boolinger(df,item,image_url,last_kline)#绘制并存储表格
-                            send_photo(2013737722,image_url)#将绘制的表格发送到TG
-                            # send_text(2013737722, last_kline.to_string())
+                        try:
+                            df = add_bollinger(data)
+                            last_kline = df.iloc[-1]
+                            if last_kline['spike'] > last_kline['spike_upper']:
+                                image_url = '/Users/pharaon/Downloads/stock/{}.png'.format(str(time.time()))
+                                print(last_kline)
+                                plot_boolinger(df,item,image_url,last_kline)#绘制并存储表格
+                                # send_photo(2013737722,image_url)#将绘制的表格发送到TG
+                                # send_text(2013737722, last_kline.to_string())
+                            # print(data['turnover_rate'][0])   # 取第一条的换手率
+                            # print(data['turnover_rate'].values.tolist())   # 转为 list
+                            if last_kline['macd_crossover_signal']==1:
+                                image_url = '/Users/pharaon/Downloads/shortterm/{}.png'.format(str(time.time()))
+                                plot_boolinger(df,item,image_url,last_kline)#绘制并存储表格
+                                # send_photo(2013737722,image_url)#将绘制的表格发送到TG
+                                # send_text(2013737722, last_kline.to_string())
+                            if last_kline['hist_signal']== 1 and last_kline['histogram'] < 0:
+                                # 如果 MACD 在 0 线以下，并且前一个macd 下降，当前macd 上升，并且比率足够大。
+                                image_url = '/Users/pharaon/Downloads/shortterm/{}.png'.format(str(time.time()))
+                                plot_boolinger(df,item,image_url,last_kline)#绘制并存储表格
+                                # send_photo(2013737722,image_url)#将绘制的表格发送到TG
+                        except Exception as e:
+                            print(e)
                     else:
                         print('error:', data)
+                send_text(2013737722, '遍历结束，请查收')
             else:
                 print('subscription failed', err_message)
-            time.sleep( ktype * 60 )
+            time.sleep( ktype * 20 )
     else:
         print('Failed to cancel all subscriptions！', err_message_unsub)
     quote_ctx.close()  # 关闭当条连接，FutuOpenD 会在1分钟后自动取消相应股票相应类型的订阅

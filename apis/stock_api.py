@@ -131,12 +131,6 @@ def get_fund_basic(ts_code,start_date,end_date):
     df = pro.index_daily(ts_code=ts_code,start_date=start_date, end_date=end_date)
     return df.iloc[::-1]
 
-#获取指数列表
-def get_index_list(market):
-    df = pro.index_basic(market=market)
-    df.to_csv('/Users/pharaon/Project/stock/file/index.csv', index=False, sep=',')
-    return df
-
 # cci_strategy 策略，返回数据表格
 def cci_strategy(df,cci_timeperiod,cci_sum_timeperiod,cci_max_falling_rating_timeperiod):
     df['cci'] = ta.CCI(df['high'], df['low'], df['close'],timeperiod=cci_timeperiod)
@@ -309,12 +303,13 @@ def add_alligator(df):
         df['jaw'] = df.apply(lambda x: smma(x['close'],x['sma13'],x['sma_shift13'],13) ,axis=1).shift(8)
         df['alligator_width'] = (df['lips'] - df['jaw'])/ df['close'] * 100
         df['alligator_width_chg'] = df['alligator_width'] - df['alligator_width'].shift()
-
-        
         df['alligator_crossover'] = pa.cross(df['close'],df['teeth']) # 收盘价穿越 中线
-        df = df.fillna(value=1)
+        print(df)
+        # df = df.fillna(value=1)
         # df.to_csv('/Users/pharaon/Project/stock/file/test_alligator.csv', index=False, sep=',')
+
         return df
+
     except Exception as e:
         print('alligator error')
         print(e)
@@ -329,6 +324,23 @@ def add_vegas(df):
         df = df.fillna(value=1)
         return df
     except Exception as e:
-        print('alligator error')
+        print('vegas error')
         print(e)
 
+def add_bollinger(df):
+    bollinger_width_limit = 10
+    timeperiod = 20
+    try:
+        df['hlc3'] = pa.hlc3(df['high'], df['low'], df['close'])
+        bbands = pa.bbands(df['hlc3'],length = timeperiod, std=2, mamode="ema", ddof = 0)
+        df['ema_lower'] = bbands['BBL_20_2.0']
+        df['ema'] = bbands['BBM_20_2.0']
+        df['ema_upper'] = bbands['BBU_20_2.0']
+        df['bandwidth'] = bbands['BBB_20_2.0']
+        df['bandwidth_chg'] = df['bandwidth'] - bbands['BBB_20_2.0'].shift()
+        df['percent'] = bbands['BBP_20_2.0']
+        df['bollinger_crossover'] = pa.cross(df['close'],df['ema_lower'])
+        return df
+    except Exception as e:
+        print('bollinger error')
+        print(e)

@@ -1,17 +1,11 @@
-import tushare as ts
-import pandas as pd
-import numpy as np
 import datetime
 import os
 import sys
 import time
 import json
-import requests
 import csv
 import re
 import random
-import talib as ta
-import pandas_ta as pa
 from decimal import Decimal
 
 #去掉股票后缀
@@ -27,6 +21,15 @@ def modify_stockcode(stock_code):
         return 'SH.' + stock_code[0:6]
     else:
         return 'SZ.' + stock_code[0:6]
+
+
+# 添加股票后缀，用于查询tushare 代码
+def add_stockcode_suffix(stock_code):
+    if stock_code[0] == '6':
+        return stock_code[0:6] + '.SH'
+    else:
+        return  stock_code[0:6] + '.SZ'
+
 
 # 计算持续一个状态的日期综合
 count = 0
@@ -100,3 +103,16 @@ def today_int():
 # 数字类型的日期，用于 yfinance 查询数据
 def today_int_shift(days):
     return int((datetime.datetime.now()-datetime.timedelta(days=days)).strftime('%Y%m%d'))
+
+# 将列表转换为trading view可以上传的TXT文件
+def convert_to_trading_view_file(stocklist):
+    _list = []
+    for item in stocklist:
+        if item[0] == '6':
+            _list.append('SSE:{}'.format(item))
+        else :
+            _list.append('SZSE:{}'.format(item))
+        s = pd.DataFrame(_list)
+        s['null'] = None
+        s.to_csv('/Users/pharaon/Project/stock/stock/testing.txt', index=False, sep=',')
+        
